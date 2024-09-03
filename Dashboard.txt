@@ -1,0 +1,277 @@
+<form version="1" theme="dark">
+  <label>DBank Perfecto Performance KPI</label>
+  <fieldset autoRun="true" submitButton="true">
+    <input type="time" token="TimePicker" searchWhenChanged="true">
+      <label>Time</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="dropdown" token="timespan" searchWhenChanged="true">
+      <label>Timespan</label>
+      <default>10m</default>
+      <choice value="10m">10min</choice>
+      <choice value="30m">30min</choice>
+      <choice value="1h">1hr</choice>
+      <choice value="2h">2hr</choice>
+      <choice value="4h">4hr</choice>
+    </input>
+    <input type="dropdown" token="device" searchWhenChanged="true" depends="$hidden$">
+      <label>Device</label>
+      <choice value="*">All</choice>
+      <default>*</default>
+    </input>
+    <input type="dropdown" token="monitor" searchWhenChanged="true" depends="$hidden$">
+      <label>Monitor</label>
+      <search>
+        <query/>
+        <earliest>0</earliest>
+        <latest></latest>
+      </search>
+      <fieldForValue>Primary.methodName</fieldForValue>
+      <default></default>
+      <initialValue></initialValue>
+    </input>
+    <!--<input type="dropdown" token="status" searchWhenChanged="true">-->
+    <!--  <label>Status</label>-->
+    <!--  <choice value="*">All</choice>-->
+    <!--  <choice value="&quot;Pass&quot;">Pass</choice>-->
+    <!--  <choice value="&quot;Fail&quot;">Fail</choice>-->
+    <!--  <search>-->
+    <!--    <query/>-->
+    <!--    <earliest>0</earliest>-->
+    <!--    <latest></latest>-->
+    <!--  </search>-->
+    <!--  <fieldForValue>Primary.testStatus</fieldForValue>-->
+    <!--  <default>*</default>-->
+    <!--  <initialValue>*</initialValue>-->
+    <!--</input>-->
+    <!--<input type="time" token="field1">-->
+    <!--  <label></label>-->
+    <!--  <default>-->
+    <!--    <earliest>-24h@h</earliest>-->
+    <!--    <latest>now</latest>-->
+    <!--  </default>-->
+    <!--</input>-->
+  </fieldset>
+  <!--<row>-->
+  <!--  <panel>-->
+  <!--    <html>-->
+  <!--      <a href="/app/search/perfecto_monitoring">-->
+  <!--        <h3>Return to Home Dashboard</h3>-->
+  <!--      </a>-->
+  <!--    </html>-->
+  <!--  </panel>-->
+  <!--</row>-->
+  <row>
+    <panel>
+      <chart>
+        <title>Transaction Time Last Execution</title>
+        <search>
+          <query>
+            <!--index=test_index -->
+            <!--| spath -->
+            <!--| rename Primary.Steps{}.stepDescription AS StepDescription, Primary.Steps{}.stepTimer AS StepTimer, Primary.StartApplication_LastExecution as StartApplication_LastExecution, Primary.LoginApp_LastExecution as LoginApp_LastExecution, Primary.DepositAmount_LastExecution as DepositAmount_LastExecution, Primary.ATMLookUp_LastExecution as AppLogout_LastExecution-->
+            <!--| timechart span=$timespan$ first(StartApplication_LastExecution) as StartApplication_LastExecution first(LoginApp_LastExecution) as LoginApp_LastExecution first(DepositAmount_LastExecution) as DepositAmount_LastExecution first(AppLogout_LastExecution) as AppLogout_LastExecution-->
+            
+            index=test_index 
+            | spath input=Primary 
+            | foreach Primary.*_Transaction_LastExecution [ eval &lt;&lt;FIELD&gt;&gt; = coalesce('&lt;&lt;FIELD&gt;&gt;', 0) ]
+            | rename Primary.*_Transaction_LastExecution as *._Transaction_LastExecution
+            | foreach *_Transaction_LastExecution [ eval &lt;&lt;FIELD&gt;&gt; = replace('&lt;&lt;FIELD&gt;&gt;', "^Primary.", "") ]
+            | rename *._Transaction_LastExecution as *_Transaction_LastExecution 
+            | timechart span=$timespan$ first(*_Transaction_LastExecution) as *
+
+          </query>
+          <earliest>$TimePicker.earliest$</earliest>
+          <latest>$TimePicker.latest$</latest>
+        </search>
+        <option name="charting.axisLabelsX.majorLabelStyle.overflowMode">ellipsisMiddle</option>
+        <option name="charting.axisLabelsX.majorLabelStyle.rotation">90</option>
+        <option name="charting.axisTitleX.visibility">visible</option>
+        <option name="charting.axisTitleY.visibility">visible</option>
+        <option name="charting.axisTitleY2.visibility">visible</option>
+        <option name="charting.chart.height">500</option>
+        <option name="charting.chart">column</option>
+        <option name="charting.chart.showDataLabels">all</option>
+        <option name="charting.chart.stackMode">default</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.layout.splitSeries">0</option>
+        <option name="charting.legend.labelStyle.overflowMode">ellipsisMiddle</option>
+        <option name="charting.legend.placement">bottom</option>
+      </chart>
+    </panel>
+        <panel>
+      <chart>
+        <title>Transaction Time TODAY's Execution</title>
+        <search>
+          <query>
+          <!--index=test_index -->
+          <!--| spath input=Primary -->
+          <!--| foreach *_Transaction_LastExecution [ eval &lt;&lt;FIELD&gt;&gt; = coalesce('&lt;&lt;FIELD&gt;&gt;', 0) ]-->
+          <!--| timechart span=$timespan$ first(*_Transaction_LastExecution) as *-->
+          
+          index=test_index 
+          | spath input=Primary 
+          | foreach Primary.*_Transaction_Today [ eval &lt;&lt;FIELD&gt;&gt; = coalesce('&lt;&lt;FIELD&gt;&gt;', 0) ]
+          | rename Primary.*_Transaction_Today as *._Transaction_Today
+          | foreach *_Transaction_Today [ eval &lt;&lt;FIELD&gt;&gt; = replace('&lt;&lt;FIELD&gt;&gt;', "^Primary.", "") ]
+          | rename *._Transaction_Today as *_Transaction_Today 
+          | timechart span=$timespan$ first(*_Transaction_Today) as *
+
+          </query>
+          <earliest>$TimePicker.earliest$</earliest>
+          <latest>$TimePicker.latest$</latest>
+        </search>
+        <option name="charting.axisLabelsX.majorLabelStyle.overflowMode">ellipsisMiddle</option>
+        <option name="charting.axisLabelsX.majorLabelStyle.rotation">90</option>
+        <option name="charting.axisTitleX.visibility">visible</option>
+        <option name="charting.axisTitleY.visibility">visible</option>
+        <option name="charting.axisTitleY2.visibility">visible</option>
+        <option name="charting.chart.height">500</option>
+        <option name="charting.chart">column</option>
+        <option name="charting.chart.showDataLabels">all</option>
+        <option name="charting.chart.stackMode">default</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.layout.splitSeries">0</option>
+        <option name="charting.legend.labelStyle.overflowMode">ellipsisMiddle</option>
+        <option name="charting.legend.placement">bottom</option>
+      </chart>
+    </panel>
+  </row>
+    <row>
+    <panel>
+      <chart>
+        <title>Transaction Time YESTERDAY Execution</title>
+        <search>
+          <query>
+            
+              index=test_index 
+              | spath input=Primary 
+              | foreach Primary.*_Transaction_Yesterday [ eval &lt;&lt;FIELD&gt;&gt; = coalesce('&lt;&lt;FIELD&gt;&gt;', 0) ]
+              | rename Primary.*_Transaction_Yesterday as *._Transaction_Yesterday
+              | foreach *_Transaction_Yesterday [ eval &lt;&lt;FIELD&gt;&gt; = replace('&lt;&lt;FIELD&gt;&gt;', "^Primary.", "") ]
+              | rename *._Transaction_Yesterday as *_Transaction_Yesterday 
+              | timechart span=$timespan$ first(*_Transaction_Yesterday) as *
+
+          </query>
+          <earliest>$TimePicker.earliest$</earliest>
+          <latest>$TimePicker.latest$</latest>
+        </search>
+        <option name="charting.axisLabelsX.majorLabelStyle.overflowMode">ellipsisMiddle</option>
+        <option name="charting.axisLabelsX.majorLabelStyle.rotation">90</option>
+        <option name="charting.axisTitleX.visibility">visible</option>
+        <option name="charting.axisTitleY.visibility">visible</option>
+        <option name="charting.axisTitleY2.visibility">visible</option>
+        <option name="charting.chart.height">500</option>
+        <option name="charting.chart">column</option>
+        <option name="charting.chart.showDataLabels">all</option>
+        <option name="charting.chart.stackMode">default</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.layout.splitSeries">0</option>
+        <option name="charting.legend.labelStyle.overflowMode">ellipsisMiddle</option>
+        <option name="charting.legend.placement">bottom</option>
+      </chart>
+    </panel>
+        <panel>
+      <chart>
+        <title>Transaction Time 7-DAYS Execution</title>
+        <search>
+          <query>
+              index=test_index 
+              | spath input=Primary 
+              | foreach Primary.*_Transaction_7Days_Ago [ eval &lt;&lt;FIELD&gt;&gt; = coalesce('&lt;&lt;FIELD&gt;&gt;', 0) ]
+              | rename Primary.*_Transaction_7Days_Ago as *._Transaction_7Days_Ago
+              | foreach *_Transaction_7Days_Ago [ eval &lt;&lt;FIELD&gt;&gt; = replace('&lt;&lt;FIELD&gt;&gt;', "^Primary.", "") ]
+              | rename *._Transaction_7Days_Ago as *_Transaction_7Days_Ago 
+              | timechart span=$timespan$ first(*_Transaction_7Days_Ago) as *
+
+          </query>
+          <earliest>$TimePicker.earliest$</earliest>
+          <latest>$TimePicker.latest$</latest>
+        </search>
+        <option name="charting.axisLabelsX.majorLabelStyle.overflowMode">ellipsisMiddle</option>
+        <option name="charting.axisLabelsX.majorLabelStyle.rotation">90</option>
+        <option name="charting.axisTitleX.visibility">visible</option>
+        <option name="charting.axisTitleY.visibility">visible</option>
+        <option name="charting.axisTitleY2.visibility">visible</option>
+        <option name="charting.chart.height">500</option>
+        <option name="charting.chart">column</option>
+        <option name="charting.chart.showDataLabels">all</option>
+        <option name="charting.chart.stackMode">default</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.layout.splitSeries">0</option>
+        <option name="charting.legend.labelStyle.overflowMode">ellipsisMiddle</option>
+        <option name="charting.legend.placement">bottom</option>
+      </chart>
+    </panel>
+  </row>
+      <row>
+    <panel>
+      <chart>
+        <title>Transaction Time 14-DAYS Execution</title>
+        <search>
+          <query>
+            
+              index=test_index 
+              | spath input=Primary 
+              | foreach Primary.*_Transaction_14Days_Ago [ eval &lt;&lt;FIELD&gt;&gt; = coalesce('&lt;&lt;FIELD&gt;&gt;', 0) ]
+              | rename Primary.*_Transaction_14Days_Ago as *._Transaction_14Days_Ago
+              | foreach *_Transaction_14Days_Ago [ eval &lt;&lt;FIELD&gt;&gt; = replace('&lt;&lt;FIELD&gt;&gt;', "^Primary.", "") ]
+              | rename *._Transaction_14Days_Ago as *_Transaction_14Days_Ago 
+              | timechart span=$timespan$ first(*_Transaction_14Days_Ago) as *
+
+          </query>
+          <earliest>$TimePicker.earliest$</earliest>
+          <latest>$TimePicker.latest$</latest>
+        </search>
+        <option name="charting.axisLabelsX.majorLabelStyle.overflowMode">ellipsisMiddle</option>
+        <option name="charting.axisLabelsX.majorLabelStyle.rotation">90</option>
+        <option name="charting.axisTitleX.visibility">visible</option>
+        <option name="charting.axisTitleY.visibility">visible</option>
+        <option name="charting.axisTitleY2.visibility">visible</option>
+        <option name="charting.chart.height">500</option>
+        <option name="charting.chart">column</option>
+        <option name="charting.chart.showDataLabels">all</option>
+        <option name="charting.chart.stackMode">default</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.layout.splitSeries">0</option>
+        <option name="charting.legend.labelStyle.overflowMode">ellipsisMiddle</option>
+        <option name="charting.legend.placement">bottom</option>
+      </chart>
+    </panel>
+        <panel>
+      <chart>
+        <title>Transaction Time 30-DAYS Execution</title>
+        <search>
+          <query>
+              index=test_index 
+              | spath input=Primary 
+              | foreach Primary.*_Transaction_30Days_Ago [ eval &lt;&lt;FIELD&gt;&gt; = coalesce('&lt;&lt;FIELD&gt;&gt;', 0) ]
+              | rename Primary.*_Transaction_30Days_Ago as *._Transaction_30Days_Ago
+              | foreach *_Transaction_30Days_Ago [ eval &lt;&lt;FIELD&gt;&gt; = replace('&lt;&lt;FIELD&gt;&gt;', "^Primary.", "") ]
+              | rename *._Transaction_30Days_Ago as *_Transaction_30Days_Ago 
+              | timechart span=$timespan$ first(*_Transaction_30Days_Ago) as *
+
+          </query>
+          <earliest>$TimePicker.earliest$</earliest>
+          <latest>$TimePicker.latest$</latest>
+        </search>
+        <option name="charting.axisLabelsX.majorLabelStyle.overflowMode">ellipsisMiddle</option>
+        <option name="charting.axisLabelsX.majorLabelStyle.rotation">90</option>
+        <option name="charting.axisTitleX.visibility">visible</option>
+        <option name="charting.axisTitleY.visibility">visible</option>
+        <option name="charting.axisTitleY2.visibility">visible</option>
+        <option name="charting.chart.height">500</option>
+        <option name="charting.chart">column</option>
+        <option name="charting.chart.showDataLabels">all</option>
+        <option name="charting.chart.stackMode">default</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.layout.splitSeries">0</option>
+        <option name="charting.legend.labelStyle.overflowMode">ellipsisMiddle</option>
+        <option name="charting.legend.placement">bottom</option>
+      </chart>
+    </panel>
+  </row>
+</form>
